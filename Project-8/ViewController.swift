@@ -19,6 +19,7 @@ class ViewController: UIViewController {
     var activedButtons = [UIButton]()
     var solutions = [String]()
     
+    var count = 0
     var score = 0{
         didSet{
             scoreLabel.text = "Score: \(score)"
@@ -43,6 +44,7 @@ class ViewController: UIViewController {
         cluesLabel.text = "CLUES"
         cluesLabel.setContentHuggingPriority(UILayoutPriority(1), for: .vertical)
         cluesLabel.numberOfLines = 0;
+
         view.addSubview(cluesLabel)
         
         answersLabel = UILabel()
@@ -66,12 +68,18 @@ class ViewController: UIViewController {
         submit.translatesAutoresizingMaskIntoConstraints = false
         submit.setTitle("Submit", for: .normal)
         submit.addTarget(self, action: #selector(submitTapped), for: .touchUpInside)
+        submit.layer.borderColor = UIColor.black.cgColor
+        submit.layer.borderWidth = 1
+        submit.backgroundColor = UIColor.lightGray
         view.addSubview(submit)
         
         let clear = UIButton(type: .system)
         clear.translatesAutoresizingMaskIntoConstraints = false
         clear.setTitle("Clear", for: .normal)
         clear.addTarget(self, action: #selector(clearTapped), for: .touchUpInside)
+        clear.layer.borderColor = UIColor.lightGray.cgColor
+        clear.layer.borderWidth = 1
+        clear.frame.size.width = 300
         view.addSubview(clear)
         
         let buttonsView = UIView()
@@ -121,6 +129,8 @@ class ViewController: UIViewController {
                 letterButton.titleLabel?.font = UIFont.systemFont(ofSize: 36)
                 letterButton.setTitle("AAA", for: .normal)
                 letterButton.addTarget(self, action: #selector(letterTapped), for: .touchUpInside)
+                letterButton.layer.borderColor = UIColor.lightGray.cgColor
+                letterButton.layer.borderWidth = 1
                 
                 let frame = CGRect(x: width*column, y: height*row, width: width, height: height)
                 letterButton.frame = frame
@@ -152,12 +162,18 @@ class ViewController: UIViewController {
             
             currentAnswer.text = ""
             score += 1
+            count += 1
             
-            if score % 7 == 0{
+            if count % 7 == 0{
                 let alert = UIAlertController(title: "Well done!", message: "Do you want to go to the next level?", preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "OK", style: .default, handler: levelUp))
                 present(alert, animated: true)
             }
+        } else {
+            score -= 1
+            let alert = UIAlertController(title: "Incorrect Answer", message: "", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: clearButtons))
+            present(alert, animated: true)
         }
         
     }
@@ -172,13 +188,16 @@ class ViewController: UIViewController {
         }
     }
     
-    @objc func clearTapped(_ sender: UIButton){
+    func clearButtons(action: UIAlertAction! = nil){
         currentAnswer.text = ""
-        
-        for button in activedButtons {
-            button.isHidden = false
+        for i in activedButtons {
+            i.isHidden = false
         }
         activedButtons.removeAll()
+    }
+    
+    @objc func clearTapped(_ sender: UIButton){
+        clearButtons()
     }
     
     @objc func letterTapped(_ sender: UIButton){
