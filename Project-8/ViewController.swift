@@ -44,7 +44,6 @@ class ViewController: UIViewController {
         cluesLabel.text = "CLUES"
         cluesLabel.setContentHuggingPriority(UILayoutPriority(1), for: .vertical)
         cluesLabel.numberOfLines = 0;
-
         view.addSubview(cluesLabel)
         
         answersLabel = UILabel()
@@ -113,7 +112,7 @@ class ViewController: UIViewController {
             clear.heightAnchor.constraint(equalToConstant: 44),
             
             buttonsView.widthAnchor.constraint(equalToConstant: 750),
-            buttonsView.heightAnchor.constraint(equalToConstant: 320),
+            buttonsView.heightAnchor.constraint(equalToConstant: 350),
             buttonsView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             buttonsView.topAnchor.constraint(equalTo: submit.bottomAnchor, constant: 20),
             buttonsView.bottomAnchor.constraint(equalTo: view.layoutMarginsGuide.bottomAnchor, constant: -20)
@@ -134,21 +133,58 @@ class ViewController: UIViewController {
                 
                 let frame = CGRect(x: width*column, y: height*row, width: width, height: height)
                 letterButton.frame = frame
-                
                 buttonsView.addSubview(letterButton)
-                
                 letterButtons.append(letterButton)
-                
             }
         }
-        
 
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadLevel()
+        performSelector(inBackground: #selector(loadLevel), with: nil)
+    }
+    
+    @objc func loadLevel(){
+        var clueString = ""
+        var solutionString = ""
+        var letterBits = [String]()
         
+        if let levelFileURL = Bundle.main.url(forResource: "level\(level)", withExtension: ".txt"){
+            if let levelContents = try?  String(contentsOf: levelFileURL){
+                var lines = levelContents.components(separatedBy: "\n")
+                lines.shuffle()
+                
+                for (index, line) in lines.enumerated(){
+                    let parts = line.components(separatedBy: ": ")
+                    let answer = parts[0]
+                    let clue = parts[1]
+                    
+                    clueString += "\(index + 1). \(clue)\n"
+                    
+                    let solutionWord = answer.replacingOccurrences(of: "|", with: "")
+                    solutionString += "\(solutionWord.count) letters\n"
+                    solutions.append(solutionWord)
+                    
+                    let bits = answer.components(separatedBy: "|")
+                    letterBits += bits
+                }
+            }
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.cluesLabel.text = clueString.trimmingCharacters(in: .whitespacesAndNewlines)
+            self?.answersLabel.text = solutionString.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            letterBits.shuffle()
+            
+            if letterBits.count == self?.letterButtons.count {
+                if let number_buttons = self?.letterButtons.count {
+                    for i in 0..<number_buttons {
+                        self?.letterButtons[i].setTitle(letterBits[i], for: .normal)
+                    }
+                }
+            }
+        }
     }
 
     @objc func submitTapped(_ sender: UIButton){
@@ -192,6 +228,9 @@ class ViewController: UIViewController {
         currentAnswer.text = ""
         for i in activedButtons {
             i.isHidden = false
+            UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 5, options: [], animations: {
+                i.alpha = 1
+                }, completion: nil)
         }
         activedButtons.removeAll()
     }
@@ -204,45 +243,10 @@ class ViewController: UIViewController {
         guard let buttonTitle = sender.titleLabel?.text else { return }
         currentAnswer.text = currentAnswer.text?.appending(buttonTitle)
         activedButtons.append(sender)
-        sender.isHidden = true
-    }
-
-    func loadLevel(){
-        var clueString = ""
-        var solutionString = ""
-        var letterBits = [String]()
-        
-        if let levelFileURL = Bundle.main.url(forResource: "level\(level)", withExtension: ".txt"){
-            if let levelContents = try?  String(contentsOf: levelFileURL){
-                var lines = levelContents.components(separatedBy: "\n")
-                lines.shuffle()
-                
-                for (index, line) in lines.enumerated(){
-                    let parts = line.components(separatedBy: ": ")
-                    let answer = parts[0]
-                    let clue = parts[1]
-                    
-                    clueString += "\(index + 1). \(clue)\n"
-                    
-                    let solutionWord = answer.replacingOccurrences(of: "|", with: "")
-                    solutionString += "\(solutionWord.count) letters\n"
-                    solutions.append(solutionWord)
-                    
-                    let bits = answer.components(separatedBy: "|")
-                    letterBits += bits
-                }
-            }
-        }
-        cluesLabel.text = clueString.trimmingCharacters(in: .whitespacesAndNewlines)
-        answersLabel.text = solutionString.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        letterBits.shuffle()
-        
-        if letterBits.count == letterButtons.count {
-            for i in 0..<letterButtons.count {
-                letterButtons[i].setTitle(letterBits[i], for: .normal)
-            }
-        }
+        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 15, options: [], animations: {
+            sender.alpha = 0.1
+        })
+//        sender.isHidden = true
     }
 }
 
